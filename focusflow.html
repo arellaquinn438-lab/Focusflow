@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FocusFlow</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f3fb;color:#242235}
+.app{max-width:480px;margin:auto;min-height:100vh;padding:22px 18px 90px}
+h1{margin:0;font-size:30px}.sub{color:#77718a;margin:6px 0 20px}
+.card{background:white;border-radius:20px;padding:18px;margin:12px 0;box-shadow:0 4px 18px #0000000d}
+.progress{font-size:42px;font-weight:700;margin:8px 0}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+input{width:100%;padding:12px;border:1px solid #ddd7e8;border-radius:12px;font-size:15px;margin:6px 0}
+button{border:0;border-radius:12px;padding:11px 15px;background:#6d5bd0;color:white;font-weight:700;cursor:pointer}
+button.secondary{background:#eeeaf8;color:#51478d}
+.item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #eee}
+.item:last-child{border:0}.done{text-decoration:line-through;color:#999}
+nav{position:fixed;bottom:0;left:0;right:0;background:white;padding:12px;display:flex;justify-content:center;gap:8px;box-shadow:0 -3px 15px #0001}
+nav button{background:#eeeaf8;color:#51478d}.timer{font-size:58px;text-align:center;font-weight:700;margin:15px 0}
+small{color:#817b90}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>FocusFlow</h1>
+  <div class="sub">Let's get things done.</div>
+
+  <section id="home">
+    <div class="card">
+      <small>Today's Progress</small>
+      <div class="progress" id="progress">0%</div>
+      <small id="summary">0 of 0 tasks completed</small>
+    </div>
+
+    <div class="card">
+      <div class="row"><h3>Today's Tasks</h3><button onclick="show('tasks')">View</button></div>
+      <div id="homeTasks"></div>
+    </div>
+
+    <div class="card">
+      <div class="row"><h3>Habits</h3><button onclick="show('habits')">View</button></div>
+      <div id="homeHabits"></div>
+    </div>
+
+    <div class="card">
+      <div class="row"><h3>Focus</h3><button onclick="show('focus')">Start</button></div>
+      <div><b id="homeTimer">25:00</b></div>
+    </div>
+
+    <div class="card">
+      <div class="row"><h3>Goals</h3><button onclick="show('goals')">View</button></div>
+      <div id="homeGoals"></div>
+    </div>
+  </section>
+
+  <section id="tasks" style="display:none">
+    <div class="card"><h2>Tasks</h2>
+      <input id="taskInput" placeholder="What do you need to do?">
+      <button onclick="addTask()">Add task</button>
+      <div id="taskList"></div>
+    </div>
+  </section>
+
+  <section id="habits" style="display:none">
+    <div class="card"><h2>Habits</h2>
+      <input id="habitInput" placeholder="e.g. Read 20 minutes">
+      <button onclick="addHabit()">Add habit</button>
+      <div id="habitList"></div>
+    </div>
+  </section>
+
+  <section id="focus" style="display:none">
+    <div class="card"><h2>Focus Timer</h2>
+      <div class="timer" id="timer">25:00</div>
+      <div class="row">
+        <button onclick="startTimer()">Start</button>
+        <button class="secondary" onclick="pauseTimer()">Pause</button>
+        <button class="secondary" onclick="resetTimer()">Reset</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="goals" style="display:none">
+    <div class="card"><h2>Goals</h2>
+      <input id="goalInput" placeholder="e.g. Learn JavaScript">
+      <button onclick="addGoal()">Add goal</button>
+      <div id="goalList"></div>
+    </div>
+  </section>
+</div>
+
+<nav>
+<button onclick="show('home')">🏠 Home</button>
+<button onclick="show('tasks')">✓ Tasks</button>
+<button onclick="show('habits')">↻ Habits</button>
+<button onclick="show('focus')">⏱ Focus</button>
+<button onclick="show('goals')">🎯 Goals</button>
+</nav>
+
+<script>
+let data=JSON.parse(localStorage.getItem('focusflow')||'{"tasks":[],"habits":[],"goals":[]}');
+function save(){localStorage.setItem('focusflow',JSON.stringify(data));render();}
+function show(id){['home','tasks','habits','focus','goals'].forEach(x=>document.getElementById(x).style.display=x===id?'block':'none');render();}
+function addTask(){let v=taskInput.value.trim();if(v){data.tasks.push({text:v,done:false});taskInput.value='';save()}}
+function toggleTask(i){data.tasks[i].done=!data.tasks[i].done;save()}
+function addHabit(){let v=habitInput.value.trim();if(v){data.habits.push({text:v,done:false});habitInput.value='';save()}}
+function toggleHabit(i){data.habits[i].done=!data.habits[i].done;save()}
+function addGoal(){let v=goalInput.value.trim();if(v){data.goals.push({text:v,progress:0});goalInput.value='';save()}}
+function changeGoal(i,delta){data.goals[i].progress=Math.max(0,Math.min(100,data.goals[i].progress+delta));save()}
+function render(){
+ taskList.innerHTML=data.tasks.map((x,i)=>`<div class="item"><input type="checkbox" ${x.done?'checked':''} onchange="toggleTask(${i})"><span class="${x.done?'done':''}">${x.text}</span></div>`).join('')||'<small>No tasks yet.</small>';
+ habitList.innerHTML=data.habits.map((x,i)=>`<div class="item"><input type="checkbox" ${x.done?'checked':''} onchange="toggleHabit(${i})"><span class="${x.done?'done':''}">${x.text}</span></div>`).join('')||'<small>No habits yet.</small>';
+ goalList.innerHTML=data.goals.map((x,i)=>`<div class="item" style="display:block"><b>${x.text}</b><div>${x.progress}%</div><button onclick="changeGoal(${i},10)">+10%</button> <button class="secondary" onclick="changeGoal(${i},-10)">-10%</button></div>`).join('')||'<small>No goals yet.</small>';
+ let total=data.tasks.length,done=data.tasks.filter(x=>x.done).length,p=total?Math.round(done/total*100):0;
+ progress.textContent=p+'%';summary.textContent=`${done} of ${total} tasks completed`;
+ homeTasks.innerHTML=data.tasks.slice(0,3).map(x=>`<div class="item ${x.done?'done':''}">${x.done?'✓':'○'} ${x.text}</div>`).join('')||'<small>No tasks yet.</small>';
+ homeHabits.innerHTML=data.habits.slice(0,3).map(x=>`<div class="item ${x.done?'done':''}">${x.done?'✓':'○'} ${x.text}</div>`).join('')||'<small>No habits yet.</small>';
+ homeGoals.innerHTML=data.goals.slice(0,3).map(x=>`<div class="item">${x.text} — ${x.progress}%</div>`).join('')||'<small>No goals yet.</small>';
+}
+let seconds=1500,interval=null;
+function fmt(){let m=Math.floor(seconds/60),s=seconds%60;return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
+function updateTimer(){timer.textContent=fmt();homeTimer.textContent=fmt()}
+function startTimer(){if(interval)return;interval=setInterval(()=>{if(seconds>0){seconds--;updateTimer()}else{clearInterval(interval);interval=null;alert('Focus session complete!')}} ,1000)}
+function pauseTimer(){clearInterval(interval);interval=null}
+function resetTimer(){pauseTimer();seconds=1500;updateTimer()}
+render();updateTimer();
+</script>
+</body>
+</html>
