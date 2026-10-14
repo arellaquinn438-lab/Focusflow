@@ -181,5 +181,14 @@ function pauseTimer(){clearInterval(interval);interval=null}
 function resetTimer(){pauseTimer();seconds=1500;updateTimer()}
 render();updateTimer();
 </script>
+  <script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js")
+      .then(() => console.log("FocusFlow is ready!"))
+      .catch(error => console.error("Service worker error:", error));
+  });
+}
+  </script>
 </body>
    
